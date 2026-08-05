@@ -1,0 +1,39 @@
+express — HTTP server for login and fetching rooms/history
+socket.io — real-time WebSocket messaging
+better-sqlite3 — the database, stored as a single file (no DB server to install; easy to swap for Postgres later when you deploy)
+bcrypt — password hashing
+jsonwebtoken — session tokens after login
+cors — lets the app talk to the server during development
+nodemon — auto-restarts the server when you save changes
+
+
+* required dependecies
+npm install express socket.io better-sqlite3 bcrypt jsonwebtoken cors
+npm install --save-dev nodemon
+
+* dependency
+npx create-expo-app@latest app --template blank
+
+
+cd app
+npx expo install expo-secure-store
+npm install socket.io-client @react-navigation/native @react-navigation/native-stack
+npx expo install react-native-screens react-native-safe-area-context'
+npx expo install @react-navigation/bottom-tabs
+npm install jwt-decode
+npm install react-native-svg
+npm install tweetnacl tweetnacl-util
+npm install react-native-get-random-values
+
+when adding new data:
+node src/seed.js
+
+friends-chat/
+├── server/
+│   ├── src/           
+│   ├── package.json
+│   └── node_modules/
+└── app/
+    ├── App.js
+    ├── package.json
+    └── node_modules/
