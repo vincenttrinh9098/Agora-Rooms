@@ -1,4 +1,7 @@
-# Agora Rooms
+# Agora Rooms 
+
+## CURRENTLY IN RE-DESIGN PHAE
+
 
 A private, end-to-end encrypted messaging app built for a small group of trusted friends. Full-stack, real-time, with genuine client-side encryption — the server never has access to plaintext message content.
 
