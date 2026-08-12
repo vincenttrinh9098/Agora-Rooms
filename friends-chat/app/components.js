@@ -7,15 +7,19 @@ import Svg, { Defs, Pattern, Path, Rect,Polygon } from 'react-native-svg';
 export function SvgDiamond({
   size = 40,
   color = "#e74c3c",
+  children,
 }) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: size, height: size }]}>
       <Svg width={size} height={size} viewBox="0 0 100 100">
-        <Polygon
-          points="50,0 100,50 50,100 0,50"
-          fill={color}
-        />
+        <Polygon points="50,0 100,50 50,100 0,50" fill={color} />
       </Svg>
+ 
+      {children && (
+        <View style={styles.overlay}>
+          {children}
+        </View>
+      )}
     </View>
   );
 }
@@ -49,9 +53,15 @@ export function MeanderDivider({ width = 340, height = 9, color = '#1C1D22' }) {
 
 
 
+ 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlay: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

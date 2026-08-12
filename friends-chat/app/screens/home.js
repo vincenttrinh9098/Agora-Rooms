@@ -38,13 +38,51 @@ const GRID_SIZE = 40;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const TOP_HEADER_HEIGHT = SCREEN_HEIGHT * 0.14; // 15% of total screen height
 
+const ICON_OPTIONS = [
+  // General
+  'chatbubbles-outline',
+  'people-outline',
+  'megaphone-outline',
 
+  // Interests / hobbies
+  'game-controller-outline',
+  'musical-notes-outline',
+  'film-outline',
+  'book-outline',
+  'football-outline',
+  'basketball-outline',
+
+  // Technology
+  'code-slash-outline',
+  'laptop-outline',
+  'hardware-chip-outline',
+
+  // School / learning
+  'school-outline',
+  'library-outline',
+  'flask-outline',
+
+  // Lifestyle
+  'restaurant-outline',
+  'fitness-outline',
+  'airplane-outline',
+  'car-outline',
+
+  // Social / trending
+  'flame-outline',
+  'heart-outline',
+  'star-outline',
+  'sparkles-outline',
+  'planet-outline',
+];
 
 export default function HomeScreen({ navigation }) {
   const { token,userId } = useAuth();
   
   const [roomName, setRoomName] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState(ICON_OPTIONS[0]);
+
 
   const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,27 +113,21 @@ export default function HomeScreen({ navigation }) {
   }
 
   async function handleCreateRoomPress() {
-    console.log('Create room tapped');
     try {
-      const result = await joinRoom(roomName, roomPassword, token);
-      console.log("result.id:" , result.id);
+      const result = await joinRoom(roomName, roomPassword, token, selectedIcon);
       await fetchRooms();
-
+  
       if (result.created) {
         const roomKeyBytes = generateRoomKey();
-        const myPublicKeyB64 = await ensureKeypairExists(); 
+        const myPublicKeyB64 = await ensureKeypairExists();
         const encryptedForSelf = await encryptRoomKeyForMember(roomKeyBytes, myPublicKeyB64);
         await updateRoomMemberKey(token, result.id, userId, encryptedForSelf);
       }
-
-
     } catch (error) {
-      console.log('Create room error:', error.message);
       Alert.alert('Room Create failed', 'Could not create new room. Please try again.');
     } finally {
-      setRoomName('');
-      setRoomPassword('')
       setModalVisible(false);
+      setSelectedIcon(ICON_OPTIONS[0]); // reset for next time
     }
   }
 
@@ -149,7 +181,7 @@ if (isLoading) {
         >
           <View style={styles.overlay}>
             <View style={styles.modalContainer}>
-              <Text style={styles.title}>Create or Join a Room</Text>
+              <Text style={styles.modaltitle}>Create or Join a Room</Text>
 
               <TextInput
                 style={styles.input}
@@ -170,6 +202,32 @@ if (isLoading) {
                 secureTextEntry
                 keyboardAppearance="dark"
               />
+
+
+              <Text style={styles.iconPickerLabel}>Choose an icon</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.iconPickerRow}
+              >
+                {ICON_OPTIONS.map((iconName) => (
+                  <TouchableOpacity
+                    key={iconName}
+                    style={[
+                      styles.iconOption,
+                      selectedIcon === iconName && styles.iconOptionSelected,
+                    ]}
+                    onPress={() => setSelectedIcon(iconName)}
+                  >
+                    <Ionicons
+                      name={iconName}
+                      size={22}
+                      color={selectedIcon === iconName ? COLORS.createTileText : COLORS.tileText}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
 
               <View style={styles.modalButtonRow}>
                 <TouchableOpacity
@@ -192,17 +250,28 @@ if (isLoading) {
 
         {/* Real rooms */}
         {rooms.map((room) => (
+
           <TouchableOpacity
-            activeOpacity={1} // 1 = 100% solid (no transparency on click)
+            activeOpacity={1}
             key={room.id}
-            style={styles.tile}
+            style={[styles.tile, { width: TILE_SIZE, height: TILE_SIZE }]}
             onPress={() => handleRoomPress(room)}
           >
+
+            <SvgDiamond size={80} color="#2F5D68">
+              <Ionicons 
+              name={room.icon || 'chatbubbles-outline'}
+              size={40} 
+              color={COLORS.backgroundColorOne}
+              style={styles.tileIcon}
+              />
+            </SvgDiamond>
+
             <Text style={styles.roomName}>
-              {room.name.length > 14 ? `${room.name.slice(0, 14)}...` : room.name}
+              {room.name.length > 10? `${room.name.slice(0, 10)}...` : room.name}
             </Text>
-            
           </TouchableOpacity>
+
         ))}
 
         
@@ -266,7 +335,7 @@ overlay: {
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#0F172A',
+    backgroundColor:COLORS.createTileModal,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
@@ -285,12 +354,50 @@ overlay: {
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 12,
     paddingHorizontal: 16,
-    color: '#fff',
+    color: COLORS.headerText,
     fontSize: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#244387',
+    borderColor: COLORS.headerText,
   },
+  modaltitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.headerText,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+
+  iconPickerLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8A8780',
+    marginBottom: 8,
+  },
+  iconPickerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  iconOption: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.tileBorder,
+    backgroundColor: COLORS.tileBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconOptionSelected: {
+    backgroundColor: COLORS.createTileBackground,
+    borderColor: COLORS.createTileBackground,
+  },
+  tileIcon: {
+    marginBottom: 6,
+  },
+
   modalButtonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -301,11 +408,11 @@ overlay: {
     marginRight: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
     alignItems: 'center',
   },
   modalCancelText: {
-    color: '#94A3B8',
+    color:  COLORS.backgroundColorOne,
     fontWeight: '600',
   },
   modalConfirmButton: {
@@ -313,11 +420,11 @@ overlay: {
     marginLeft: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#38BDF8',
+    backgroundColor: COLORS.headerButton,
     alignItems: 'center',
   },
   modalConfirmText: {
-    color: '#0A0F1D',
+    color: COLORS.backgroundColorOne,
     fontWeight: '700',
   },
 topHeader: {

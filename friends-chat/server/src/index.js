@@ -20,7 +20,7 @@ const getUserByUsername = db.prepare(`
 `);
 
 const getRoomsForUser = db.prepare(`
-  SELECT r.id, r.name
+  SELECT r.id, r.name, r.icon
   FROM rooms r
   JOIN room_members m ON r.id = m.room_id
   WHERE m.user_id = ?
@@ -69,21 +69,24 @@ const getRoomByName = db.prepare(`
   SELECT id, name, password_hash FROM rooms WHERE name = ?
 `);
 
-const insertRoom = db.prepare(`
-  INSERT INTO rooms (name, password_hash, created_by)
-  VALUES (?, ?, ?)
-`);
+
 
 const insertRoomMember = db.prepare(`
   INSERT OR IGNORE INTO room_members (room_id, user_id, encrypted_room_key)
   VALUES (?, ?, ?)
 `);
 
+const insertRoom = db.prepare(`
+  INSERT INTO rooms (name, password_hash, icon, created_by)
+  VALUES (?, ?, ?, ?)
+`);
+
+
+
 app.post('/rooms/join', requireAuth, (req, res) => {
-  const { roomName, roomPassword } = req.body;
-  const name = roomName
-  const password = roomPassword
-  console.log("new room:", name);
+  const { roomName, roomPassword, icon } = req.body;
+  const name = roomName;
+  const password = roomPassword;
 
   if (!name || !password) {
     return res.status(400).json({ error: 'Room name and password are required' });
@@ -92,27 +95,26 @@ app.post('/rooms/join', requireAuth, (req, res) => {
   const existingRoom = getRoomByName.get(name);
 
   if (!existingRoom) {
-    // No room with this name yet — create it
     const passwordHash = bcrypt.hashSync(password, 10);
-    const result = insertRoom.run(name, passwordHash, req.userId);
+    const result = insertRoom.run(name, passwordHash, icon || 'chatbubbles-outline', req.userId);
     const newRoomId = result.lastInsertRowid;
 
     insertRoomMember.run(newRoomId, req.userId, null);
 
-    return res.json({ id: newRoomId, name, created: true });
+    return res.json({ id: newRoomId, name, icon: icon || 'chatbubbles-outline', created: true });
   }
 
-  // Room exists — verify password
   const passwordMatches = bcrypt.compareSync(password, existingRoom.password_hash);
   if (!passwordMatches) {
     return res.status(401).json({ error: 'Invalid room name or password' });
   }
 
-  // Correct password — add as a member (safe even if already one, thanks to OR IGNORE)
   insertRoomMember.run(existingRoom.id, req.userId, null);
 
   res.json({ id: existingRoom.id, name: existingRoom.name, created: false });
 });
+
+
 
 
 //------------------------------------------------------------------------
@@ -385,7 +387,7 @@ app.get('/users/:id/public-key', requireAuth, (req, res) => {
 
 
 const getRoomById = db.prepare(`
-  SELECT id, name, created_by FROM rooms WHERE id = ?
+  SELECT id, name, icon, created_by FROM rooms WHERE id = ?
 `);
 
 const deleteMessagesForRoom = db.prepare(`
@@ -442,9 +444,11 @@ app.get('/rooms/:id', requireAuth, (req, res) => {
   res.json({
     id: room.id,
     name: room.name,
+    icon: room.icon,
     createdBy: room.created_by,
   });
 });
+ 
  
 //------------------------------------------------------------------------
 
@@ -483,9 +487,24 @@ app.post('/rooms/:id/rotate-key', requireAuth, (req, res) => {
 });
 
 
+//------------------------------------------------------------------------
 
-
-
+const getUserById = db.prepare(`
+  SELECT id, username, created_at FROM users WHERE id = ?
+`);
+ 
+app.get('/users/me', requireAuth, (req, res) => {
+  const user = getUserById.get(req.userId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+ 
+  res.json({
+    id: user.id,
+    username: user.username,
+    createdAt: user.created_at,
+  });
+});
 
 
 //------------------------------------------------------------------------

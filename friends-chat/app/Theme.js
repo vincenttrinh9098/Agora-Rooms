@@ -3,6 +3,7 @@
 export const COLORS = {
   gradientStart: '#E3E1DA',
   gradientEnd: '#E3E1DA',
+  backgroundColorOne: '#E3E1DA',
 
   gridLine: 'rgba(238, 203, 0, 0.21)',
 
@@ -10,7 +11,8 @@ export const COLORS = {
   tileBorder: '#ECECEC', 
   tileText: '#000000',
 
-  createTileBackground: '#24454d82',   // deep Aegean — the dark end of the brand-mark gradient
+  createTileBackground: '#2f5d687c',   // deep Aegean — the dark end of the brand-mark gradient
+  createTileModal: '#E3E1DA',
   createTileBorder: '#3A6873',       // same as bg, or omit border entirely on a filled tile
   createTileText: '#FFFFFF',
 

@@ -364,15 +364,6 @@ function renderBubbleContent(item, isMine, fontScale = 1) {
           </View>
         </Pressable>
 
-        <Text style={styles.headerTitle}>
-          {roomName.length > 14 ? `${roomName.slice(0, 14)}...` : roomName}
-        </Text>
-
-        <Pressable onPress={() => handleRoomInfoPress(roomId, roomName)} style={styles.headerSide}>
-          <View style={styles.navBtn}>
-            <Ionicons name="information-circle-outline" size={30} color="#2F5D68" />
-          </View>
-        </Pressable>
       </View>
 
       <MeanderDivider width={SCREEN_WIDTH - 0} />
@@ -388,6 +379,7 @@ function renderBubbleContent(item, isMine, fontScale = 1) {
     </ScreenBackground>
   );
 }
+
 
   const activeIsMine = activeMessage && activeMessage.senderId === userId;
 
@@ -450,7 +442,7 @@ function renderBubbleContent(item, isMine, fontScale = 1) {
                       <View style={styles.actionMenu}>
                         <TouchableOpacity style={styles.actionRow} onPress={handleEditPress}>
                           <Text style={styles.actionRowText}>Edit</Text>
-                          <Ionicons name="pencil-outline" size={18} color="#38BDF8" />
+                          <Ionicons name="pencil-outline" size={18} color="#000000" />
                         </TouchableOpacity>
                         <View style={styles.actionDivider} />
                         <TouchableOpacity style={styles.actionRow} onPress={handleDeletePress}>
@@ -683,8 +675,10 @@ editedLabel: {
     alignItems: 'center',
   },
   revealedTimestampText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#94A3B8',
+    fontFamily: 'Inter_500Medium',
+    fontWeight: '800',
   },
 
   // --- Modal / long-press menu ---
@@ -710,7 +704,7 @@ overlay: {
 
 actionMenu: {
     width: 220,
-    backgroundColor: '#0F172A', // matches your tile background
+    backgroundColor: COLORS.backgroundColorOne, // matches your tile background
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 12,
@@ -732,7 +726,7 @@ actionMenu: {
   actionRowText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#E2E8F0', // matches your tile text color
+    color: '#000000', // matches your tile text color
   },
   actionDivider: {
     height: StyleSheet.hairlineWidth,

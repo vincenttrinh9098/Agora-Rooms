@@ -50,14 +50,14 @@ async function getRooms(token) {
   return data;
 }
 
-async function joinRoom(roomName, roomPassword, token) {
+async function joinRoom(roomName, roomPassword, token, icon) {
   const response = await authFetch(`${baseURL}/rooms/join`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ roomName, roomPassword }),
+    body: JSON.stringify({ roomName, roomPassword, icon}),
   });
 
   const data = await response.json();
@@ -275,7 +275,20 @@ async function rotateRoomKey(token, roomId){
 }
 
 
-
+async function getMyInfo(token) {
+  const response = await authFetch(`${baseURL}/users/me`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+ 
+  const data = await response.json();
+ 
+  if (!response.ok) {
+    throw new Error(data.error || 'Fetching user info failed');
+  }
+ 
+  return data;
+}
+ 
 export { 
     login, 
     getRooms, 
@@ -291,5 +304,6 @@ export {
     getPublicKey,
     deleteRoom,
     getRoom,
-    rotateRoomKey
+    rotateRoomKey,
+    getMyInfo
   }; 

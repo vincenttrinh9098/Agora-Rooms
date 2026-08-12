@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS rooms (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   name          TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
+  icon          TEXT DEFAULT 'chatbubbles-outline',
   created_by    INTEGER REFERENCES users(id),
   created_at    TEXT DEFAULT CURRENT_TIMESTAMP
 );

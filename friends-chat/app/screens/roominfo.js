@@ -19,9 +19,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { baseURL } from '../constants';
-import { SvgDiamond } from '../components';
+import {SvgDiamond, MeanderDivider} from '../components';
 import ScreenBackground from '../ScreenBackground';
 import { useAuth } from '../AuthContext';
+import { COLORS} from '../Theme';
 
 
 import { getMembers ,updateRoomMemberKey,getPublicKey, deleteRoom,getRoom,rotateRoomKey} from '../api';
@@ -30,16 +31,19 @@ import { decryptRoomKey, encryptRoomKeyForMember, ensureKeypairExists, generateR
 
 const SCREEN_HEIGHT_RI = require('react-native').Dimensions.get('window').height;
 const TOP_SECTION_HEIGHT = SCREEN_HEIGHT_RI * 0.45; // 35% of screen
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function RoomInfoScreen({ route, navigation }) {
   //console.log("route received in RoomInfoScreen:", route);
   //console.log("route.params specifically:", route?.params);
    const { roomId, roomName } = route.params;
    const { token, userId } = useAuth();
+   
 
     const [members,setMembers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [createdBy, setCreatedBy] = useState(null);
+    const [roomIcon, setRoomIcon] = useState('chatbubbles-outline');
     const [activeTab, setActiveTab] = useState('members'); // 'members' | 'settings'
     const isCreator = createdBy === userId;
 
@@ -71,12 +75,13 @@ export default function RoomInfoScreen({ route, navigation }) {
     async function fetchRoomDetails() {
       try {
         const room = await getRoom(token, roomId);
-        console.log('Room details fetched:', JSON.stringify(room));
         setCreatedBy(room.createdBy);
+        setRoomIcon(room.icon || 'chatbubbles-outline');
       } catch (err) {
         console.log('Failed to fetch room details:', err.message);
       }
     }
+
     useEffect(()=>{
         fetchMembers();
         fetchRoomDetails();
@@ -127,7 +132,7 @@ export default function RoomInfoScreen({ route, navigation }) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: confirmDeleteRoom,
+          onPress: confirmDeleteRoom
         },
       ]
     );
@@ -143,7 +148,15 @@ function handleRotateKeyPress() {
     ]
   );
 }
- 
+async function confirmDeleteRoom() {
+  try {
+    await deleteRoom(token, roomId);
+    navigation.navigate('MainTabs'); // back to Home, since this room no longer exists
+  } catch (err) {
+    Alert.alert('Delete failed', 'Could not delete the room. Please try again.');
+  }
+}
+
 async function confirmRotateKey() {
   try {
     await rotateRoomKey(token, roomId);
@@ -172,28 +185,32 @@ async function confirmRotateKey() {
     }
 
 
-    function renderMembers({ item }) {
+  function renderMembers({ item }) {
     return (
-        <View style={styles.memberRow}>
+      <View style={styles.memberCard}>
+        <View style={styles.memberAvatarCircle}>
+          <Ionicons name="person" size={20} color={COLORS.createTileBackground} />
+        </View>
+
         <Text style={styles.memberName}>{item.username}</Text>
-    
+
         {item.isPending && (
-            <View style={styles.memberRight}>
-            <Text style={styles.pendingBadge}>Pending Invite</Text>
-    
+          <View style={styles.memberRight}>
+            <Text style={styles.pendingBadge}>Pending</Text>
+
             {!currentUserIsPending && (
-                <TouchableOpacity
+              <TouchableOpacity
                 style={styles.inviteButton}
                 onPress={() => handleInvitePress(item)}
-                >
-                <Text style={styles.inviteButtonText}>Accept User</Text>
-                </TouchableOpacity>
+              >
+                <Text style={styles.inviteButtonText}>Accept</Text>
+              </TouchableOpacity>
             )}
-            </View>
+          </View>
         )}
-        </View>
+      </View>
     );
-    }
+  }
  
 
 
@@ -204,18 +221,23 @@ async function confirmRotateKey() {
 
 
             <View style={[styles.topSection, { height: TOP_SECTION_HEIGHT }]}>
-            <View style={styles.header}>
-                <Pressable onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={24} color="white" />
-                </Pressable>   
-            </View>
+              <View style={styles.header}>
+                  <Pressable onPress={() => navigation.goBack()}>
+                  <Ionicons name="arrow-back" size={30} color="#2F5D68" />
+                  </Pressable>   
+              </View>
+              <MeanderDivider width={SCREEN_WIDTH - 0} />
             
-            <View style={styles.roomHeader}>
-                <SvgDiamond size={140} color="#00ffff" />
-                <Text style={styles.headerText}>{roomName}</Text>
+              <View style={styles.roomHeader}>
+                  <SvgDiamond size={140} color="#2F5D68">
+                    <Ionicons name={roomIcon} size={64} color="#ffffff" />
+                  </SvgDiamond>
+                  <Text style={styles.headerText}>
+                    {roomName.length > 20 ? `${roomName.slice(0, 20)}...` : roomName}
+                  </Text>
+              </View>
             </View>
-            </View>
-            
+            <MeanderDivider width={SCREEN_WIDTH - 0} />
 
             <View style={styles.tabRow}>
               <TouchableOpacity
@@ -272,35 +294,30 @@ async function confirmRotateKey() {
 
 }
 
+
+
 const styles = StyleSheet.create({
-topSection: {
-  width: '100%',
-  overflow: 'hidden',
-},
-  content:{
+  topSection: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  roomHeader:{
+  roomHeader: {
     width: '100%',
     alignItems: 'center',
     paddingVertical: 20,
-
-    borderBottomWidth: 5,
-    borderBottomColor:'#ffff'
-    //borderBottomColor: 'rgba(255, 215, 0, 0.3)' // gold
   },
- headerText: {
-    justifyContent:'center',
-    alignItems:'center',
+  headerText: {
     marginTop: 30,
-    color: '#ffffff',
+    color: COLORS.headerTitle,
     fontSize: 30,
     fontWeight: '700',
     letterSpacing: 2,
-    },
-
+  },
   header: {
     height: 100,
     paddingTop: 35,
@@ -308,78 +325,79 @@ topSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.3)', // Cyber yellow border accent
-    backgroundColor: 'rgb(5, 12, 26)', // Slightly darkened backdrop
-
+    backgroundColor: COLORS.headerBackground,
   },
-  headerTitle: { 
-    color: '#94A3B8',
+  headerTitle: {
+    color: COLORS.headerText,
     fontSize: 20,
     fontWeight: '700',
     letterSpacing: 2,
-
-   },
+  },
   backButton: {
-  backgroundColor: "#007AFF", // blue
-  paddingVertical: 5,
-  paddingHorizontal: 15,
-  borderRadius: 9999, // pill shape
-  justifyContent: "center",
-  alignItems: "center",
-},
-  deleteButton: {
-  backgroundColor: "#ff0000", // blue
-  paddingVertical: 5,
-  paddingHorizontal: 15,
-  borderRadius: 9999, // pill shape
-  justifyContent: "center",
-  alignItems: "center",
-},
+    backgroundColor: COLORS.headerButton,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 9999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
 
-backButtonText: {
-  color: "#fff",
-  fontWeight: "600",
-  fontSize: 16,
-},
-deleteButtonText: {
-  color: "#000000",
-  fontWeight: "600",
-  fontSize: 16,
-},
-deleteRoomButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: 20,
-  marginHorizontal: 20,
-  paddingVertical: 12,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: '#FF453A',
-},
-deleteRoomButtonText: {
-  color: '#FF453A',
-  fontWeight: '700',
-  marginLeft: 8,
-},
-membersArea: {
-  flex: 1,
-},
-
-memberRow: {
+  deleteRoomButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    marginTop: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D64545',
+    backgroundColor: 'rgba(214, 69, 69, 0.37)',
+    width: '50%'
+  },
+  deleteRoomButtonText: {
+    color: '#D64545',
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+
+  membersArea: {
+    flex: 1,
+  },memberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.tileBackground,
+    borderWidth: 1,
+    borderColor: COLORS.tileBorder,
+    borderRadius: 14,
     paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 16,
+    marginHorizontal: 20,
+    marginVertical: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  memberAvatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(47,93,104,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   memberName: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#E2E8F0',
+    color: COLORS.tileText,
   },
   memberRight: {
     flexDirection: 'row',
@@ -387,47 +405,49 @@ memberRow: {
   },
   pendingBadge: {
     fontSize: 12,
-    color: '#F59E0B',
+    color: '#B8860B',
     marginRight: 10,
   },
   inviteButton: {
-    backgroundColor: '#38BDF8',
+    backgroundColor: COLORS.createTileBackground,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
   },
   inviteButtonText: {
-    color: '#0A0F1D',
+    color: COLORS.createTileText,
     fontWeight: '700',
     fontSize: 13,
   },
 
-
   rotateKeyButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: 12,
-  marginHorizontal: 20,
-  paddingVertical: 12,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: '#F59E0B',
-},
-rotateKeyButtonText: {
-  color: '#F59E0B',
-  fontWeight: '700',
-  marginLeft: 8,
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#B8860B',
+    backgroundColor: 'rgba(184, 135, 11, 0.31)',
+    width: '50%'
+  },
+  rotateKeyButtonText: {
+    color: '#B8860B',
+    fontWeight: '700',
+    marginLeft: 8,
+  },
 
-tabRow: {
+  tabRow: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginTop: 16,
     marginBottom: 8,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.tileBackground,
     borderRadius: 12,
     padding: 4,
+    borderWidth: 1,
+    borderColor: COLORS.tileBorder,
   },
   tabButton: {
     flex: 1,
@@ -436,20 +456,22 @@ tabRow: {
     alignItems: 'center',
   },
   tabButtonActive: {
-    backgroundColor: '#244387',
+    backgroundColor: COLORS.createTileBackground,
   },
   tabButtonText: {
-    color: '#94A3B8',
+    color: '#8A8780',
     fontWeight: '600',
     fontSize: 14,
   },
   tabButtonTextActive: {
-    color: '#E2E8F0',
-  },
-  settingsArea: {
-    flex: 1,
-    paddingTop: 8,
+    color: COLORS.createTileText,
   },
 
-
-})
+settingsArea: {
+  flex: 1,
+  justifyContent: 'flex-start',
+  alignItems: 'center',
+  paddingTop: 16,
+  gap: 12,
+},
+});
