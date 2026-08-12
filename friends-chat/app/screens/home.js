@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Pattern, Path, Rect } from 'react-native-svg';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -35,7 +36,7 @@ const TILE_SIZE = (SCREEN_WIDTH - SPACING * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
 const GRID_SIZE = 40; 
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const TOP_HEADER_HEIGHT = SCREEN_HEIGHT * 0.15; // 15% of total screen height
+const TOP_HEADER_HEIGHT = SCREEN_HEIGHT * 0.14; // 15% of total screen height
 
 
 
@@ -117,9 +118,18 @@ if (isLoading) {
     <ScreenBackground>
       
       <View style={[styles.topHeader, { height: TOP_HEADER_HEIGHT }]}>
-        <Text style={styles.topHeaderText}>Agora Rooms</Text>
-        <MeanderDivider width={SCREEN_WIDTH - 20} />
+        <View style={styles.headerArea}>
+          <Text style={styles.topHeaderText}>Agora Rooms</Text>
+          <Ionicons
+            name="chatbubbles-outline"
+            size={24}
+            color="#2F5D68"
+          />
+        </View>
       </View>
+
+
+      <MeanderDivider width={SCREEN_WIDTH - 25} />
 
       {/* --- Main Screen Content --- */}
       <ScrollView contentContainerStyle={styles.grid}>
@@ -188,7 +198,10 @@ if (isLoading) {
             style={styles.tile}
             onPress={() => handleRoomPress(room)}
           >
-            <Text style={styles.roomName}>{room.name}</Text>
+            <Text style={styles.roomName}>
+              {room.name.length > 14 ? `${room.name.slice(0, 14)}...` : room.name}
+            </Text>
+            
           </TouchableOpacity>
         ))}
 
@@ -312,13 +325,20 @@ topHeader: {
   justifyContent: 'center',
   alignItems: 'center',
   paddingHorizontal: 20,
-  backgroundColor: COLORS.headerBackgroundS // Slightly darkened backdrop
+  backgroundColor: COLORS.headerBackground // Slightly darkened backdrop
 },
 topHeaderText: {
-  marginTop: 30,
   color: COLORS.headerText,
   fontSize: 30,
   fontWeight: '700',
   letterSpacing: 2,
+},
+
+headerArea: {
+  marginTop: 50,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
 },
 });

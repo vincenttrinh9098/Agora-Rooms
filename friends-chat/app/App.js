@@ -17,10 +17,39 @@ import AuthContext from './AuthContext';
 import {setUnauthorizedHandler, updatePublicKey} from './api';
 import { ensureKeypairExists } from './crypto';
 import ScreenBackground from './ScreenBackground';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 const TOKEN_KEY = 'auth_token';
 const Stack = createNativeStackNavigator();
 
+import { useFonts } from 'expo-font';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from '@expo-google-fonts/inter';
+import {
+  Fraunces_400Regular,
+  Fraunces_500Medium,
+  Fraunces_600SemiBold,
+  Fraunces_700Bold,
+} from '@expo-google-fonts/fraunces';
+
+
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Fraunces_400Regular,
+    Fraunces_500Medium,
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
+  });
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -89,33 +118,36 @@ export default function App() {
     );
   }
   
-
-
+  if (!fontsLoaded) {
+    return null; 
+  }
 
 
   return (
-    <AuthContext.Provider value={{ token, userId, isLoggedIn, logOut: handleLogout }}>
-      <NavigationContainer>
-        <Stack.Navigator   
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#100B2B' }, // matches your theme's gradientStart
-        }}>
-          {isLoggedIn ? (
-            <>
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-              <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
-              <Stack.Screen name="RoomInfo" component={RoomInfoScreen} />
-            </>
-          ) : (
-            <Stack.Screen name="Login">
-              {(props) => <LoginScreen {...props} onLoginSuccess={handleLoginSuccess} />}
-            </Stack.Screen>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
-      <StatusBar style="auto" />
-    </AuthContext.Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthContext.Provider value={{ token, userId, isLoggedIn, logOut: handleLogout }}>
+        <NavigationContainer>
+          <Stack.Navigator   
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: '#100B2B' }, // matches your theme's gradientStart
+          }}>
+            {isLoggedIn ? (
+              <>
+                <Stack.Screen name="MainTabs" component={MainTabs} />
+                <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
+                <Stack.Screen name="RoomInfo" component={RoomInfoScreen} />
+              </>
+            ) : (
+              <Stack.Screen name="Login">
+                {(props) => <LoginScreen {...props} onLoginSuccess={handleLoginSuccess} />}
+              </Stack.Screen>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+        <StatusBar style="auto" />
+      </AuthContext.Provider>
+    </GestureHandlerRootView>
   );
 }
 

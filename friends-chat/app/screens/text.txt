@@ -289,59 +289,78 @@ function renderBubbleContent(item, isMine, fontScale = 1) {
 }
 
 
-  const revealOffset = useSharedValue(0);
-  const REVEAL_DISTANCE = -70;
+  const dragX = useSharedValue(0);
+  const MAX_REVEAL = 70;
   
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
-      const next = Math.max(REVEAL_DISTANCE, Math.min(0, event.translationX));
-      revealOffset.value = next;
+      dragX.value = Math.max(-MAX_REVEAL, Math.min(MAX_REVEAL, event.translationX));
     })
     .onEnd((event) => {
-      const shouldReveal = event.translationX < REVEAL_DISTANCE / 2;
-      revealOffset.value = withSpring(shouldReveal ? REVEAL_DISTANCE : 0);
+      if (event.translationX > MAX_REVEAL / 2) {
+        dragX.value = withSpring(MAX_REVEAL);
+      } else if (event.translationX < -MAX_REVEAL / 2) {
+        dragX.value = withSpring(-MAX_REVEAL);
+      } else {
+        dragX.value = withSpring(0);
+      }
     });
-  
-  const bubblesAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: revealOffset.value }],
-  }));
-  
-  const timestampAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: revealOffset.value / REVEAL_DISTANCE,
-  }));
-
-  function renderMessage({ item }) {
-    if (item.type === 'date') {
-      return (
-        <View style={styles.dateSeparator}>
-          <Text style={styles.dateSeparatorText}>{item.label}</Text>
-        </View>
-      );
-    }
-  
-    const isMine = item.senderId === userId;
-  
-    return (
-      <View style={styles.messageRowWrapper}>
-        <Animated.View style={[styles.bubbleRow, isMine ? styles.rowMine : styles.rowTheirs, bubblesAnimatedStyle]}>
-          <View style={styles.bubbleColumn}>
-            {!isMine && <Text style={styles.senderName}>{item.senderUsername}</Text>}
+function MessageBubbleRow({ item, isMine, dragX }) {
+  const bubbleAnimatedStyle = useAnimatedStyle(() => {
+    // Own messages only respond to RIGHTWARD drag (positive values).
+    // Others' messages only respond to LEFTWARD drag (negative values).
+    const offset = isMine
+      ? Math.max(0, dragX.value)
+      : Math.min(0, dragX.value);
+    return { transform: [{ translateX: offset }] };
+  });
+ 
+  const timestampAnimatedStyle = useAnimatedStyle(() => {
+    const offset = isMine ? Math.max(0, dragX.value) : Math.min(0, dragX.value);
+    return { opacity: Math.abs(offset) / MAX_REVEAL };
+  });
+ 
+  return (
+    <View style={styles.messageRowWrapper}>
+      <Animated.View
+        style={[
+          styles.revealedTimestamp,
+          isMine ? styles.revealedTimestampLeft : styles.revealedTimestampRight,
+          timestampAnimatedStyle,
+        ]}
+      >
+        <Text style={styles.revealedTimestampText}>{formatTime(item.sentAt)}</Text>
+      </Animated.View>
+ 
+      <Animated.View style={[styles.bubbleRow, isMine ? styles.rowMine : styles.rowTheirs, bubbleAnimatedStyle]}>
+        <View style={styles.bubbleColumn}>
+          {!isMine && <Text style={styles.senderName}>{item.senderUsername}</Text>}
             <TouchableOpacity
               activeOpacity={isMine ? 0.7 : 1}
               onLongPress={() => isMine && handleLongPress(item)}
             >
               {renderBubbleContent(item, isMine)}
             </TouchableOpacity>
-          </View>
-        </Animated.View>
-  
-        {/* Sits behind the bubble, revealed as it shifts left */}
-        <Animated.View style={[styles.revealedTimestamp, timestampAnimatedStyle]}>
-          <Text style={styles.revealedTimestampText}>{formatTime(item.sentAt)}</Text>
-        </Animated.View>
+        </View>
+      </Animated.View>
+    </View>
+  );  
+  }
+
+
+function renderMessage({ item }) {
+  if (item.type === 'date') {
+    return (
+      <View style={styles.dateSeparator}>
+        <Text style={styles.dateSeparatorText}>{item.label}</Text>
       </View>
     );
   }
+ 
+  const isMine = item.senderId === userId;
+  return <MessageBubbleRow item={item} isMine={isMine} dragX={dragX} />;
+  }
+
 
 
   if (isLoading) {
@@ -572,6 +591,15 @@ backButtonText: {
     maxWidth: '70%',
   },
 
+  revealedTimestampLeft: {
+  left: 0,
+  right: undefined,
+},
+revealedTimestampRight: {
+  right: 0,
+  left: undefined,
+},
+
 bubble: {
   alignSelf: 'flex-start',
   flexShrink: 1,
@@ -764,4 +792,3 @@ pendingSubtitle: {
 },
 
 });
-

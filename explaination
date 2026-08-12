@@ -20,10 +20,14 @@ npx expo install expo-secure-store
 npm install socket.io-client @react-navigation/native @react-navigation/native-stack
 npx expo install react-native-screens react-native-safe-area-context'
 npx expo install @react-navigation/bottom-tabs
+npx expo install expo-font @expo-google-fonts/inter @expo-google-fonts/fraunces
+npx expo install react-native-gesture-handler
+npx expo install react-native-reanimated
 npm install jwt-decode
 npm install react-native-svg
 npm install tweetnacl tweetnacl-util
 npm install react-native-get-random-values
+
 
 when adding new data:
 node src/seed.js
