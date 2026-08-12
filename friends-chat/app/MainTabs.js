@@ -15,7 +15,7 @@ export default function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBarStyle,
-        tabBarActiveTintColor: COLORS.createTileText, // cyan accent, matches Home
+        tabBarActiveTintColor: COLORS.headerText, // cyan accent, matches Home
         tabBarInactiveTintColor: '#465362',
         tabBarShowLabel: true,
         tabBarLabelStyle: styles.tabBarLabel,

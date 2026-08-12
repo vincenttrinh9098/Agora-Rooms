@@ -13,26 +13,30 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
+import Svg, { Defs, Pattern, Path, Rect } from 'react-native-svg';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { baseURL } from '../constants';
-import {SvgDiamond} from '../components';
+import {SvgDiamond,MeanderDivider} from '../components';
 import { useAuth } from '../AuthContext';
 import { getRooms, joinRoom,updateRoomMemberKey } from '../api';
 import { generateRoomKey, encryptRoomKeyForMember, ensureKeypairExists } from '../crypto';
 import ScreenBackground from '../ScreenBackground';
+import { COLORS} from '../Theme';
+
+
 
 const Stack = createNativeStackNavigator();
 
 // Grid math: 2 columns, fixed spacing between/around tiles
-const NUM_COLUMNS = 2;
-const SPACING = 30;
+const NUM_COLUMNS = 3;
+const SPACING = 15;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const TILE_SIZE = (SCREEN_WIDTH - SPACING * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
 const GRID_SIZE = 40; 
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const TOP_HEADER_HEIGHT = SCREEN_HEIGHT * 0.15; // 15% of total screen height
+
 
 
 export default function HomeScreen({ navigation }) {
@@ -114,7 +118,7 @@ if (isLoading) {
       
       <View style={[styles.topHeader, { height: TOP_HEADER_HEIGHT }]}>
         <Text style={styles.topHeaderText}>Agora Rooms</Text>
-        <View style={styles.topHeaderBorderLine} />
+        <MeanderDivider width={SCREEN_WIDTH - 20} />
       </View>
 
       {/* --- Main Screen Content --- */}
@@ -124,7 +128,7 @@ if (isLoading) {
           style={[styles.tile, styles.createTile]}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.createTileText}>+ Create Room</Text>
+          <Text style={styles.createTileText}>Create Room</Text>
         </TouchableOpacity>
 
         <Modal
@@ -187,6 +191,8 @@ if (isLoading) {
             <Text style={styles.roomName}>{room.name}</Text>
           </TouchableOpacity>
         ))}
+
+        
       </ScrollView>
     </ScreenBackground>
   );
@@ -212,31 +218,31 @@ const styles = StyleSheet.create({
 tile: {
   width: TILE_SIZE,
   height: TILE_SIZE,
-  backgroundColor: '#0F172A', 
+  backgroundColor: COLORS.tileBackground, 
   borderRadius: 12,
   justifyContent: 'center',
   alignItems: 'center',
   padding: 8,
   borderWidth: 1,
   // Subtle blue/cyan accent border defines the edge cleanly
-  borderColor: '#244387', 
+  borderColor: COLORS.tileBorder
 },
 roomName: {
   fontSize: 15,
   fontWeight: '600',
   textAlign: 'center',
-  color: '#E2E8F0',
+  color: COLORS.tileText,
 },
 createTile: {
-  backgroundColor: '#0A0F1D', 
-  borderWidth: 1.5,
-  borderColor: '#1e6380', // Subtle cyan highlight for the create action
+  backgroundColor: COLORS.createTileBackground,
+  borderWidth: 2,
+  borderColor: COLORS.createTileBorder,
   borderStyle: 'dashed',
 },
 createTileText: {
   fontWeight: '600',
   textAlign: 'center',
-  color: '#38BDF8',
+  color: COLORS.createTileText,
 },
 overlay: {
     flex: 1,
@@ -306,13 +312,11 @@ topHeader: {
   justifyContent: 'center',
   alignItems: 'center',
   paddingHorizontal: 20,
-  borderBottomWidth: 1,
-  borderBottomColor: 'rgba(255, 215, 0, 0.3)', // Cyber yellow border accent
-  backgroundColor: 'rgb(5, 12, 26)', // Slightly darkened backdrop
+  backgroundColor: COLORS.headerBackgroundS // Slightly darkened backdrop
 },
 topHeaderText: {
   marginTop: 30,
-  color: '#94A3B8',
+  color: COLORS.headerText,
   fontSize: 30,
   fontWeight: '700',
   letterSpacing: 2,

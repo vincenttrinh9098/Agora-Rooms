@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { useAuth } from '../AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { COLORS} from '../Theme';
 
 export default function SettingsScreen() {
   const { logOut } = useAuth();
@@ -10,7 +10,7 @@ export default function SettingsScreen() {
   return (
 
       <LinearGradient
-        colors={['#acb9e4', '#0d244c']}
+        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.container}

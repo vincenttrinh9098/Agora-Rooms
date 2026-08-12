@@ -1,22 +1,22 @@
 // Shared design tokens — colors, gradients, spacing — used across every screen.
 
 export const COLORS = {
-  gradientStart: '#1a1919',
-  gradientEnd: '#59595c',
+  gradientStart: '#F6F4EF',
+  gradientEnd: '#F6F4EF',
 
   gridLine: 'rgba(238, 203, 0, 0.21)',
 
-  tileBackground: '#0F172A',
-  tileBorder: '#244387',
-  tileText: '#E2E8F0',
+  tileBackground: '#FFFFFF',
+  tileBorder: '#ECECEC', 
+  tileText: '#000000',
 
-  createTileBackground: '#0A0F1D',
-  createTileBorder: '#1e6380',
-  createTileText: '#38BDF8',
+  createTileBackground: '#24454d82',   // deep Aegean — the dark end of the brand-mark gradient
+  createTileBorder: '#24454D',       // same as bg, or omit border entirely on a filled tile
+  createTileText: '#FFFFFF',
 
-  headerBackground: 'rgb(5, 12, 26)',
+  headerBackground: 'F6F4EF',
   headerBorder: 'rgba(255, 215, 0, 0.3)',
-  headerText: '#94A3B8',
+  headerText: '#2F5D68',
 };
 
 export const GRID_SIZE = 40;

@@ -4,6 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 import { COLORS, GRID_SIZE } from './Theme';
 
+
+
+
+
 // Wraps any screen's content with the shared gradient + grid background.
 // Usage: <ScreenBackground><YourScreenContent /></ScreenBackground>
 export default function ScreenBackground({ children, style }) {
