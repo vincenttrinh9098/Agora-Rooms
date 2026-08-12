@@ -17,7 +17,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getMessages, sendMessage, editMessage, getMembers, deleteMessage } from '../api';
+import { getMessages, sendMessage, editMessage, getMembers, deleteMessage,getRoom } from '../api';
 import {ensureKeypairExists, decryptRoomKey,encryptMessage,decryptMessage} from '../crypto';
 import { useAuth } from '../AuthContext';
 import { io } from 'socket.io-client';

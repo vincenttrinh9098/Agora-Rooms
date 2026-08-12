@@ -5,10 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  View
 } from 'react-native';
 import { login } from '../api';
 import ScreenBackground from '../ScreenBackground';
 import { COLORS } from '../Theme';
+import { Ionicons } from '@expo/vector-icons';
+
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -34,7 +37,14 @@ export default function LoginScreen({ onLoginSuccess }) {
 
   return (
     <ScreenBackground style={styles.container}>
-      <Text style={styles.title}>Agora Rooms</Text>
+        <View style={styles.headerArea}>
+          <Text style={styles.topHeaderText}>Agora Rooms</Text>
+          <Ionicons
+            name="chatbubbles-outline"
+            size={24}
+            color="#2F5D68"
+          />
+        </View>
       <Text style={styles.subtitle}>Sign in to continue</Text>
 
       <TextInput
@@ -73,12 +83,13 @@ export default function LoginScreen({ onLoginSuccess }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
+container: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 24,
+  paddingBottom: 120,
+},
   title: {
     fontSize: 30,
     fontWeight: '700',
@@ -126,4 +137,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
+
+  topHeaderText: {
+  color: COLORS.headerText,
+  fontSize: 30,
+  fontWeight: '700',
+  letterSpacing: 2,
+},
+
+headerArea: {
+  marginTop: 50,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+},
 });

@@ -22,7 +22,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { baseURL } from '../constants';
 import {SvgDiamond,MeanderDivider} from '../components';
 import { useAuth } from '../AuthContext';
-import { getRooms, joinRoom,updateRoomMemberKey } from '../api';
+import { getRooms, joinRoom,createRoom,updateRoomMemberKey } from '../api';
 import { generateRoomKey, encryptRoomKeyForMember, ensureKeypairExists } from '../crypto';
 import ScreenBackground from '../ScreenBackground';
 import { COLORS} from '../Theme';
@@ -85,7 +85,6 @@ export default function HomeScreen({ navigation }) {
   const [modalTab, setModalTab] = useState('create')
   const [roomName, setRoomName] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
-  const [roomJoinId, setRoomJoinId] = useState('');
 
   const [selectedIcon, setSelectedIcon] = useState(ICON_OPTIONS[0]);
 
@@ -121,24 +120,52 @@ export default function HomeScreen({ navigation }) {
     setModalVisible(false);
   }
 
-  async function handleCreateRoomPress() {
-    try {
-      const result = await joinRoom(roomName, roomPassword, token, selectedIcon);
-      await fetchRooms();
-  
-      if (result.created) {
-        const roomKeyBytes = generateRoomKey();
-        const myPublicKeyB64 = await ensureKeypairExists();
-        const encryptedForSelf = await encryptRoomKeyForMember(roomKeyBytes, myPublicKeyB64);
-        await updateRoomMemberKey(token, result.id, userId, encryptedForSelf);
-      }
-    } catch (error) {
-      Alert.alert('Room Create failed', 'Could not create new room. Please try again.');
-    } finally {
-      setModalVisible(false);
-      setSelectedIcon(ICON_OPTIONS[0]); // reset for next time
-    }
+// Add near your other state:
+const [joinRoomId, setJoinRoomId] = useState('');
+
+async function handleCreateRoomPress() {
+  try {
+    const result = await createRoom(roomName, roomPassword, token, selectedIcon);
+    await fetchRooms();
+
+
+    const roomKeyBytes = generateRoomKey();
+    const myPublicKeyB64 = await ensureKeypairExists();
+    const encryptedForSelf = await encryptRoomKeyForMember(roomKeyBytes, myPublicKeyB64);
+    await updateRoomMemberKey(token, result.id, userId, encryptedForSelf);
+  } catch (error) {
+    Alert.alert('Room Create failed', error.message || 'Could not create new room.');
+  } finally {
+    setModalVisible(false);
+    setRoomName('');
+    setRoomPassword('');
+    setSelectedIcon(ICON_OPTIONS[0]);
   }
+}
+
+async function handleJoinRoomPress() {
+
+  if (!joinRoomId.trim() || !roomName.trim() || !roomPassword.trim()) {
+    Alert.alert('Missing info', 'Please fill out room ID, name, and password.');
+    return;
+  }
+  
+  try {
+    await joinRoom(token, joinRoomId, roomName, roomPassword);
+    await fetchRooms();
+    // Note: no key-resolution here — joining always lands as pending,
+    // per your existing design. An existing member must Invite you.
+  } catch (error) {
+    Alert.alert('Join failed', error.message || 'Could not join the room.');
+  } finally {
+    setModalVisible(false);
+    setRoomName('');
+    setRoomPassword('');
+    setJoinRoomId('');
+  }
+}
+
+
 
   function handleRoomPress(room) {
     console.log('Room tapped:', room.name);
@@ -309,8 +336,8 @@ if (isLoading) {
                       style={styles.input}
                       placeholder="Enter room ID"
                       placeholderTextColor="#64748B"
-                      value={roomJoinId}
-                      onChangeText={setRoomJoinId}
+                      value={joinRoomId}
+                      onChangeText={setJoinRoomId}
                       secureTextEntry
                       keyboardAppearance="dark"
                     />
@@ -327,7 +354,7 @@ if (isLoading) {
 
                       <TouchableOpacity
                         style={styles.modalConfirmButton}
-                        onPress={handleCreateRoomPress}
+                        onPress={handleJoinRoomPress}
                       >
                         <Text style={styles.modalConfirmText}>Join</Text>
                       </TouchableOpacity>

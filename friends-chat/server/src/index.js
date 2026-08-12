@@ -83,35 +83,57 @@ const insertRoom = db.prepare(`
 
 
 
-app.post('/rooms/join', requireAuth, (req, res) => {
+// --- CREATE — always makes a new room, no uniqueness check needed ---
+app.post('/rooms', requireAuth, (req, res) => {
   const { roomName, roomPassword, icon } = req.body;
-  const name = roomName;
-  const password = roomPassword;
-
-  if (!name || !password) {
+ 
+  if (!roomName || !roomPassword) {
     return res.status(400).json({ error: 'Room name and password are required' });
   }
+ 
+  const passwordHash = bcrypt.hashSync(roomPassword, 10);
+  const result = insertRoom.run(roomName, passwordHash, icon || 'chatbubbles-outline', req.userId);
+  const newRoomId = result.lastInsertRowid;
+ 
+  insertRoomMember.run(newRoomId, req.userId, null);
+ 
+  res.json({ id: newRoomId, name: roomName, icon: icon || 'chatbubbles-outline' });
+});
+ 
+// --- JOIN — requires knowing the exact room ID, name, AND password ---
+const getRoomForJoin = db.prepare(`
+  SELECT id, name, password_hash FROM rooms WHERE id = ?
+`);
 
-  const existingRoom = getRoomByName.get(name);
 
-  if (!existingRoom) {
-    const passwordHash = bcrypt.hashSync(password, 10);
-    const result = insertRoom.run(name, passwordHash, icon || 'chatbubbles-outline', req.userId);
-    const newRoomId = result.lastInsertRowid;
-
-    insertRoomMember.run(newRoomId, req.userId, null);
-
-    return res.json({ id: newRoomId, name, icon: icon || 'chatbubbles-outline', created: true });
+app.post('/rooms/:id/join', requireAuth, (req, res) => {
+  const roomId = req.params.id;
+  const { roomName, roomPassword } = req.body;
+ 
+  if (!roomName || !roomPassword) {
+    return res.status(400).json({ error: 'Room name and password are required' });
   }
-
-  const passwordMatches = bcrypt.compareSync(password, existingRoom.password_hash);
+ 
+  const room = getRoomForJoin.get(roomId);
+ 
+  const genericFail = () => res.status(403).json({ error: 'Invalid room ID, name, or password' });
+ 
+  if (!room) {
+    return genericFail();
+  }
+ 
+  if (room.name !== roomName) {
+    return genericFail();
+  }
+ 
+  const passwordMatches = bcrypt.compareSync(roomPassword, room.password_hash);
   if (!passwordMatches) {
-    return res.status(401).json({ error: 'Invalid room name or password' });
+    return genericFail();
   }
-
-  insertRoomMember.run(existingRoom.id, req.userId, null);
-
-  res.json({ id: existingRoom.id, name: existingRoom.name, created: false });
+ 
+  insertRoomMember.run(room.id, req.userId, null);
+ 
+  res.json({ id: room.id, name: room.name });
 });
 
 

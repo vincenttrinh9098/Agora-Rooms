@@ -50,8 +50,28 @@ async function getRooms(token) {
   return data;
 }
 
-async function joinRoom(roomName, roomPassword, token, icon) {
-  const response = await authFetch(`${baseURL}/rooms/join`, {
+async function joinRoom(token, roomId, roomName, roomPassword) {
+  const response = await authFetch(`${baseURL}/rooms/${roomId}/join`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ roomName, roomPassword}),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Joining room failed');
+  }
+
+  return data;
+}
+
+
+async function createRoom(roomName, roomPassword, token, icon) {
+  const response = await authFetch(`${baseURL}/rooms`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -63,11 +83,17 @@ async function joinRoom(roomName, roomPassword, token, icon) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Joining room failed');
+    throw new Error(data.error || 'Creating room failed');
   }
 
   return data;
 }
+
+
+
+
+
+
 
 async function getMessages(token, roomId) {
   const response = await authFetch(`${baseURL}/rooms/${roomId}/messages`, {
@@ -316,6 +342,7 @@ export {
     login, 
     getRooms, 
     joinRoom,
+    createRoom,
     getMessages, 
     sendMessage, 
     editMessage, 

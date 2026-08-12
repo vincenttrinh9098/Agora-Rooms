@@ -24,6 +24,7 @@ import {SvgDiamond, MeanderDivider} from '../components';
 import ScreenBackground from '../ScreenBackground';
 import { useAuth } from '../AuthContext';
 import { COLORS} from '../Theme';
+import * as Clipboard from 'expo-clipboard';
 
 
 import { getMembers ,updateRoomMemberKey,getPublicKey, deleteRoom,getRoom,rotateRoomKey,updateRoomName} from '../api';
@@ -246,6 +247,10 @@ async function confirmRotateKey() {
     Alert.alert('Rotation failed', 'Could not rotate the room key. Please try again.');
   }
 }
+function handleCopyRoomId() {
+  Clipboard.setStringAsync(roomId.toString());
+  Alert.alert('Copied', 'Room ID copied to clipboard.');
+}
 
 
 
@@ -419,6 +424,17 @@ async function confirmRotateKey() {
               />
             ) : (
               <View style={styles.settingsArea}>
+                <View style={styles.roomIdCard}>
+                  <View>
+                    <Text style={styles.roomIdLabel}>Room ID</Text>
+                    <Text style={styles.roomIdValue}>{roomId}</Text>
+                  </View>
+                
+                  <TouchableOpacity style={styles.copyButton} onPress={handleCopyRoomId}>
+                    <Ionicons name="copy-outline" size={18} color={COLORS.createTileBackground} />
+                  </TouchableOpacity>
+                </View>
+
                 {!currentUserIsPending && (
                   <TouchableOpacity style={styles.rotateKeyButton} onPress={handleRotateKeyPress}>
                     <Ionicons name="refresh-outline" size={18} color="#F59E0B" />
@@ -623,7 +639,38 @@ settingsArea: {
 },
 
 
-
+roomIdCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '80%',
+    backgroundColor: COLORS.tileBackground,
+    borderWidth: 1,
+    borderColor: COLORS.tileBorder,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  roomIdLabel: {
+    fontSize: 12,
+    color: '#8A8780',
+    marginBottom: 2,
+  },
+  roomIdValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.tileText,
+  },
+  copyButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(47,93,104,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
 
 
