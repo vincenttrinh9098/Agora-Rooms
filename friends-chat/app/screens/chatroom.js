@@ -46,6 +46,7 @@ export default function ChatRoomScreen({ route, navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [sendError, setSendError] = useState(null);
+  const [displayRoomName, setDisplayRoomName] = useState(roomName);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [poppedScale, setPoppedScale] = useState(1);
   const [isPendingKey, setIsPendingKey] = useState(false)
@@ -144,18 +145,26 @@ export default function ChatRoomScreen({ route, navigation }) {
   }
  
 
-useFocusEffect(
-  useCallback(() => {
-    async function init() {
-      roomKeyBytes.current = null; // clear any stale key before reloading
-      setIsPendingKey(false);
-      await loadRoomKey();
-      await fetchChat();
-    }
-    init();
-  }, [token, roomId])
-);
+  useFocusEffect(
+    useCallback(() => {
+      async function init() {
+        roomKeyBytes.current = null;
+        setIsPendingKey(false);
   
+        try {
+          const room = await getRoom(token, roomId);
+          setDisplayRoomName(room.name);
+        } catch (err) {
+          console.log('Failed to refresh room name:', err.message);
+        }
+  
+        await loadRoomKey();
+        await fetchChat();
+      }
+      init();
+    }, [token, roomId])
+  );
+    
 
 
 async function modifyMsg(messageId, message) {

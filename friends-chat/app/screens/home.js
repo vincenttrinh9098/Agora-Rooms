@@ -12,6 +12,9 @@ import {
   Alert,
   ActivityIndicator
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Pattern, Path, Rect } from 'react-native-svg';
@@ -79,8 +82,11 @@ const ICON_OPTIONS = [
 export default function HomeScreen({ navigation }) {
   const { token,userId } = useAuth();
   
+  const [modalTab, setModalTab] = useState('create')
   const [roomName, setRoomName] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
+  const [roomJoinId, setRoomJoinId] = useState('');
+
   const [selectedIcon, setSelectedIcon] = useState(ICON_OPTIONS[0]);
 
 
@@ -101,9 +107,12 @@ export default function HomeScreen({ navigation }) {
     }
   }
  
-  useEffect(() => {
-    fetchRooms();
-  }, [token]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRooms();
+    }, [token])
+  );
+ 
 
   function handleCloseButton(){
     setRoomName('');
@@ -179,71 +188,152 @@ if (isLoading) {
           visible={modalVisible}
           onRequestClose={() => setModalVisible(false)}
         >
+
           <View style={styles.overlay}>
             <View style={styles.modalContainer}>
-              <Text style={styles.modaltitle}>Create or Join a Room</Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Enter room name"
-                placeholderTextColor="#64748B"
-                value={roomName}
-                onChangeText={setRoomName}
-                autoCapitalize="none"
-                keyboardAppearance="dark"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Enter room password"
-                placeholderTextColor="#64748B"
-                value={roomPassword}
-                onChangeText={setRoomPassword}
-                secureTextEntry
-                keyboardAppearance="dark"
-              />
-
-
-              <Text style={styles.iconPickerLabel}>Choose an icon</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.iconPickerRow}
-              >
-                {ICON_OPTIONS.map((iconName) => (
-                  <TouchableOpacity
-                    key={iconName}
-                    style={[
-                      styles.iconOption,
-                      selectedIcon === iconName && styles.iconOptionSelected,
-                    ]}
-                    onPress={() => setSelectedIcon(iconName)}
-                  >
-                    <Ionicons
-                      name={iconName}
-                      size={22}
-                      color={selectedIcon === iconName ? COLORS.createTileText : COLORS.tileText}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-
-              <View style={styles.modalButtonRow}>
+              <View style={styles.tabRow}>
                 <TouchableOpacity
-                  style={styles.modalCancelButton}
-                  onPress={() => handleCloseButton()}
+                  style={[styles.tabButton, modalTab === 'create' && styles.tabButtonActive]}
+                  onPress={() => setModalTab('create')}
                 >
-                  <Text style={styles.modalCancelText}>Close</Text>
+                  <Text style={[styles.tabButtonText, modalTab === 'create' && styles.tabButtonTextActive]}>
+                    Create
+                  </Text>
                 </TouchableOpacity>
-
+              
                 <TouchableOpacity
-                  style={styles.modalConfirmButton}
-                  onPress={handleCreateRoomPress}
+                  style={[styles.tabButton, modalTab === 'join' && styles.tabButtonActive]}
+                  onPress={() => setModalTab('join')}
                 >
-                  <Text style={styles.modalConfirmText}>Create/Join</Text>
+                  <Text style={[styles.tabButtonText, modalTab === 'join' && styles.tabButtonTextActive]}>
+                    Join
+                  </Text>
                 </TouchableOpacity>
               </View>
+
+              {modalTab ==='create' ?(
+                  <View>
+                    <Text style={styles.modaltitle}></Text>
+
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter room name"
+                      placeholderTextColor="#64748B"
+                      value={roomName}
+                      onChangeText={setRoomName}
+                      autoCapitalize="none"
+                      keyboardAppearance="dark"
+                    />
+
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter room password"
+                      placeholderTextColor="#64748B"
+                      value={roomPassword}
+                      onChangeText={setRoomPassword}
+                      secureTextEntry
+                      keyboardAppearance="dark"
+                    />
+
+
+                    <Text style={styles.iconPickerLabel}>Choose an icon</Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.iconPickerRow}
+                    >
+                      {ICON_OPTIONS.map((iconName) => (
+                        <TouchableOpacity
+                          key={iconName}
+                          style={[
+                            styles.iconOption,
+                            selectedIcon === iconName && styles.iconOptionSelected,
+                          ]}
+                          onPress={() => setSelectedIcon(iconName)}
+                        >
+                          <Ionicons
+                            name={iconName}
+                            size={22}
+                            color={selectedIcon === iconName ? COLORS.createTileText : COLORS.tileText}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+
+
+                    <View style={styles.modalButtonRow}>
+                      <TouchableOpacity
+                        style={styles.modalCancelButton}
+                        onPress={() => handleCloseButton()}
+                      >
+                        <Text style={styles.modalCancelText}>Close</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.modalConfirmButton}
+                        onPress={handleCreateRoomPress}
+                      >
+                        <Text style={styles.modalConfirmText}>Create</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    
+                  </View>
+
+              ):(
+                  <View>
+                    <Text style={styles.modaltitle}></Text>
+
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter room name"
+                      placeholderTextColor="#64748B"
+                      value={roomName}
+                      onChangeText={setRoomName}
+                      autoCapitalize="none"
+                      keyboardAppearance="dark"
+                    />
+
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter room password"
+                      placeholderTextColor="#64748B"
+                      value={roomPassword}
+                      onChangeText={setRoomPassword}
+                      secureTextEntry
+                      keyboardAppearance="dark"
+                    />
+
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter room ID"
+                      placeholderTextColor="#64748B"
+                      value={roomJoinId}
+                      onChangeText={setRoomJoinId}
+                      secureTextEntry
+                      keyboardAppearance="dark"
+                    />
+
+
+
+                    <View style={styles.modalButtonRow}>
+                      <TouchableOpacity
+                        style={styles.modalCancelButton}
+                        onPress={() => handleCloseButton()}
+                      >
+                        <Text style={styles.modalCancelText}>Close</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.modalConfirmButton}
+                        onPress={handleCreateRoomPress}
+                      >
+                        <Text style={styles.modalConfirmText}>Join</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
             </View>
           </View>
         </Modal>
@@ -330,7 +420,7 @@ overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-start',
-    paddingTop: 150, 
+    paddingTop: 100, 
     alignItems: 'center',
   },
   modalContainer: {
@@ -340,12 +430,41 @@ overlay: {
     padding: 24,
     borderWidth: 1,
     borderColor: '#244387',
+    maxHeight:'65%'
   },
+
+    tabRow: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    backgroundColor: COLORS.tileBackground,
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: COLORS.tileBorder,
+    marginBottom:0
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 9,
+    alignItems: 'center',
+  },
+  tabButtonActive: {
+    backgroundColor: COLORS.createTileBackground,
+  },
+  tabButtonText: {
+    color: '#8A8780',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  tabButtonTextActive: {
+    color: COLORS.createTileText,
+  },
+  
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: '#E2E8F0',
-    marginBottom: 20,
     textAlign: 'center',
   },
   input: {
@@ -361,10 +480,8 @@ overlay: {
     borderColor: COLORS.headerText,
   },
   modaltitle: {
-    fontSize: 20,
-    fontWeight: '700',
     color: COLORS.headerText,
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
   },
 
@@ -412,7 +529,7 @@ overlay: {
     alignItems: 'center',
   },
   modalCancelText: {
-    color:  COLORS.backgroundColorOne,
+    color:  '#000000',
     fontWeight: '600',
   },
   modalConfirmButton: {

@@ -509,6 +509,41 @@ app.get('/users/me', requireAuth, (req, res) => {
 
 //------------------------------------------------------------------------
 
+
+const updateRoomName = db.prepare(`
+  UPDATE rooms 
+  SET name = ?, icon = ?
+  WHERE id = ?
+`);
+
+
+app.patch('/rooms/:id', requireAuth, (req, res) => {
+  const roomId = req.params.id;
+  const { name, icon } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Room name is required' });
+  }
+
+  const membership = checkMembership.get(roomId, req.userId);
+  if (!membership) {
+    return res.status(403).json({ error: 'Not a member of this room' });
+  }
+
+  try {
+    updateRoomName.run(name.trim(), icon, roomId);
+  } catch (err) {
+    // room.name has a UNIQUE constraint — this fires if the new name collides
+    return res.status(409).json({ error: 'A room with that name already exists' });
+  }
+
+  res.json({ success: true, name: name.trim(), icon:icon });
+});
+
+
+//------------------------------------------------------------------------
+
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' }, // fine for local dev with a handful of trusted friends

@@ -4,6 +4,7 @@ import {
   FlatList,
   StyleSheet,
   View,
+  ScrollView,
   Text,
   Button,
   Pressable,
@@ -25,13 +26,53 @@ import { useAuth } from '../AuthContext';
 import { COLORS} from '../Theme';
 
 
-import { getMembers ,updateRoomMemberKey,getPublicKey, deleteRoom,getRoom,rotateRoomKey} from '../api';
+import { getMembers ,updateRoomMemberKey,getPublicKey, deleteRoom,getRoom,rotateRoomKey,updateRoomName} from '../api';
 import { decryptRoomKey, encryptRoomKeyForMember, ensureKeypairExists, generateRoomKey} from '../crypto';
 
 
 const SCREEN_HEIGHT_RI = require('react-native').Dimensions.get('window').height;
 const TOP_SECTION_HEIGHT = SCREEN_HEIGHT_RI * 0.45; // 35% of screen
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+
+const ICON_OPTIONS = [
+  // General
+  'chatbubbles-outline',
+  'people-outline',
+  'megaphone-outline',
+
+  // Interests / hobbies
+  'game-controller-outline',
+  'musical-notes-outline',
+  'film-outline',
+  'book-outline',
+  'football-outline',
+  'basketball-outline',
+
+  // Technology
+  'code-slash-outline',
+  'laptop-outline',
+  'hardware-chip-outline',
+
+  // School / learning
+  'school-outline',
+  'library-outline',
+  'flask-outline',
+
+  // Lifestyle
+  'restaurant-outline',
+  'fitness-outline',
+  'airplane-outline',
+  'car-outline',
+
+  // Social / trending
+  'flame-outline',
+  'heart-outline',
+  'star-outline',
+  'sparkles-outline',
+  'planet-outline',
+];
+
 
 export default function RoomInfoScreen({ route, navigation }) {
   //console.log("route received in RoomInfoScreen:", route);
@@ -44,6 +85,7 @@ export default function RoomInfoScreen({ route, navigation }) {
     const [isLoading, setIsLoading] = useState(true);
     const [createdBy, setCreatedBy] = useState(null);
     const [roomIcon, setRoomIcon] = useState('chatbubbles-outline');
+    
     const [activeTab, setActiveTab] = useState('members'); // 'members' | 'settings'
     const isCreator = createdBy === userId;
 
@@ -86,8 +128,12 @@ export default function RoomInfoScreen({ route, navigation }) {
         fetchMembers();
         fetchRoomDetails();
     },[token,roomId]);
-
-
+  useEffect(() => {
+    setEditIcon(roomIcon);
+    setEditRoomName(roomName);
+    setDisplayIcon(roomIcon);
+    setDisplayRoomName(roomName);
+  }, [roomIcon, roomName]);
 
 
 
@@ -122,11 +168,39 @@ export default function RoomInfoScreen({ route, navigation }) {
     }
     }
 
+  
+  const[editRoomName,setEditRoomName] = useState(roomName);
+  const [editIcon, setEditIcon] = useState(roomIcon);
+
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [displayRoomName, setDisplayRoomName] = useState(roomName);
+  const [displayIcon, setDisplayIcon] = useState(roomIcon);
+
+  async function handleEditPress() {
+    try {
+      if (!editRoomName.trim()) {
+        Alert.alert('Invalid name', 'Room name cannot be empty.');
+        return;
+      }
+  
+      await updateRoomName(token, roomId, editRoomName,editIcon);
+      setDisplayRoomName(editRoomName.trim());
+      setDisplayIcon(editIcon);
+      setModalVisible(false);
+    } catch (err) {
+      Alert.alert('Edit failed', err.message);
+    }
+  }
+
+    function handleCloseButton(){
+      setModalVisible(false);
+    }
 
   function handleDeleteRoomPress() {
     Alert.alert(
       'Delete Room',
-      `Are you sure you want to delete "${roomName}"? This will permanently delete all messages and cannot be undone.`,
+      `Are you sure you want to delete "${displayRoomName}"? This will permanently delete all messages and cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -229,13 +303,86 @@ async function confirmRotateKey() {
               <MeanderDivider width={SCREEN_WIDTH - 0} />
             
               <View style={styles.roomHeader}>
-                  <SvgDiamond size={140} color="#2F5D68">
-                    <Ionicons name={roomIcon} size={64} color="#ffffff" />
-                  </SvgDiamond>
+                  <TouchableOpacity onPress={() => setModalVisible(true)}>
+                    <SvgDiamond size={140} color="#2F5D68">
+                      <Ionicons name={displayIcon} size={64} color="#ffffff" />
+                    </SvgDiamond>
+                  </TouchableOpacity>
                   <Text style={styles.headerText}>
-                    {roomName.length > 20 ? `${roomName.slice(0, 20)}...` : roomName}
+                    {displayRoomName.length > 20 ? `${displayRoomName.slice(0, 20)}...` : displayRoomName}
                   </Text>
               </View>
+              <Modal
+                animationType="fade"
+                transparent
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+              >
+                <View style={styles.overlay}>
+
+                  <View style={styles.modalContainer}>
+
+                    <TextInput
+                      style={styles.input}
+                      placeholderTextColor="#64748B"
+                      value={editRoomName}
+                      onChangeText={setEditRoomName}
+                      autoCapitalize="none"
+                      keyboardAppearance="light"
+                    />
+
+                    <Text style={styles.iconPickerLabel}>Choose an icon</Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.iconPickerRow}
+                    >
+                      {ICON_OPTIONS.map((iconName) => (
+                        <TouchableOpacity
+                          key={iconName}
+                          style={[
+                            styles.iconOption,
+                            editIcon === iconName && styles.iconOptionSelected,
+                          ]}
+                          onPress={() => setEditIcon(iconName)}
+                        >
+                          <Ionicons
+                            name={iconName}
+                            size={22}
+                            color={editIcon === iconName ? COLORS.createTileText : COLORS.tileText}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+
+
+                    <View style={styles.modalButtonRow}>
+                      <TouchableOpacity
+                        style={styles.modalCancelButton}
+                        onPress={() => handleCloseButton()}
+                      >
+                        <Text style={styles.modalCancelText}>Close</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.modalConfirmButton}
+                        onPress={handleEditPress}
+                      >
+                        <Text style={styles.modalConfirmText}>Edit</Text>
+                      </TouchableOpacity>
+                    </View>
+
+
+
+                  </View>
+
+                </View>
+                
+              </Modal>
+
+
+
+
             </View>
             <MeanderDivider width={SCREEN_WIDTH - 0} />
 
@@ -474,4 +621,99 @@ settingsArea: {
   paddingTop: 16,
   gap: 12,
 },
+
+
+
+
+
+
+overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-start',
+    paddingTop: 100, 
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    backgroundColor:COLORS.createTileModal,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#244387',
+    maxHeight:'65%'
+  },
+
+
+  input: {
+    width: '100%',
+    height: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    color: COLORS.headerText,
+    fontSize: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.headerText,
+  },
+
+
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  modalCancelButton: {
+    flex: 1,
+    marginRight: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color:  '#000000',
+    fontWeight: '600',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: COLORS.headerButton,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    color: COLORS.backgroundColorOne,
+    fontWeight: '700',
+  },
+
+  iconPickerLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8A8780',
+    marginBottom: 8,
+  },
+  iconPickerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  iconOption: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.tileBorder,
+    backgroundColor: COLORS.tileBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconOptionSelected: {
+    backgroundColor: COLORS.createTileBackground,
+    borderColor: COLORS.createTileBackground,
+  },
+
 });

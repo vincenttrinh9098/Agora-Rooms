@@ -289,6 +289,29 @@ async function getMyInfo(token) {
   return data;
 }
  
+
+
+ 
+async function updateRoomName(token, roomId, name,icon) {
+  const response = await authFetch(`${baseURL}/rooms/${roomId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name,icon}),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Updating room name failed');
+  }
+
+  return data;
+}
+
+
 export { 
     login, 
     getRooms, 
@@ -305,5 +328,6 @@ export {
     deleteRoom,
     getRoom,
     rotateRoomKey,
-    getMyInfo
+    getMyInfo,
+    updateRoomName
   }; 
