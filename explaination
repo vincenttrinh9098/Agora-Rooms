@@ -48,3 +48,12 @@ friends-chat/
 
 
     fly deploy
+
+
+
+    Server:
+    node seed.js
+    npm run dev
+
+    Client:
+    npx expo start

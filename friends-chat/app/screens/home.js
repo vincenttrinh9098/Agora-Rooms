@@ -149,7 +149,7 @@ async function handleJoinRoomPress() {
     Alert.alert('Missing info', 'Please fill out room ID, name, and password.');
     return;
   }
-  
+
   try {
     await joinRoom(token, joinRoomId, roomName, roomPassword);
     await fetchRooms();
@@ -175,7 +175,7 @@ async function handleJoinRoomPress() {
 if (isLoading) {
   return (
     <ScreenBackground style={styles.centered}>
-      <ActivityIndicator size="large" color="#38BDF8" />
+      <ActivityIndicator size="large" color={COLORS.headerBackground} />
       <Text style={styles.loadingText}>Loading rooms...</Text>
     </ScreenBackground>
   );

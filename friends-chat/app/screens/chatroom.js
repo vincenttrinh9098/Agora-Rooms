@@ -17,7 +17,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getMessages, sendMessage, editMessage, getMembers, deleteMessage,getRoom } from '../api';
+import { getMessages, sendMessage, editMessage, getMembers, deleteMessage,getRoom, getPublicKey} from '../api';
 import {ensureKeypairExists, decryptRoomKey,encryptMessage,decryptMessage} from '../crypto';
 import { useAuth } from '../AuthContext';
 import { io } from 'socket.io-client';
@@ -123,26 +123,29 @@ export default function ChatRoomScreen({ route, navigation }) {
 
   const roomKeyBytes = useRef(null);
 
-  async function loadRoomKey() {
-    try {
-      const members = await getMembers(token, roomId);
-      const myEntry = members.find((m) => m.id === userId);
-  
-      if (!myEntry || !myEntry.myEncryptedRoomKey) {
-        setIsPendingKey(true);
-        return;
-      }
-  
-      const myPublicKeyB64 = await ensureKeypairExists();
-      const decrypted = await decryptRoomKey(myEntry.myEncryptedRoomKey, myPublicKeyB64);
-  
-      roomKeyBytes.current = decrypted;
-      setIsPendingKey(!decrypted); 
-    } catch (err) {
-      console.log('Failed to load room key:', err.message);
+async function loadRoomKey() {
+  try {
+    const members = await getMembers(token, roomId);
+    const myEntry = members.find((m) => m.id === userId);
+    console.log('myEntry:', JSON.stringify(myEntry));
+
+    if (!myEntry || !myEntry.myEncryptedRoomKey) {
       setIsPendingKey(true);
+      return;
     }
+
+
+    const senderPublicKey = await getPublicKey(token, myEntry.myEncryptedBy);
+
+    const decrypted = await decryptRoomKey(myEntry.myEncryptedRoomKey, senderPublicKey.publicKey);
+
+    roomKeyBytes.current = decrypted;
+    setIsPendingKey(!decrypted);
+  } catch (err) {
+    console.log('Failed to load room key:', err.message);
+    setIsPendingKey(true);
   }
+}
  
 
   useFocusEffect(
@@ -159,6 +162,8 @@ export default function ChatRoomScreen({ route, navigation }) {
         }
   
         await loadRoomKey();
+        console.log('roomKeyBytes.current after load:', roomKeyBytes.current);
+        console.log('isPendingKey after load:', isPendingKey);
         await fetchChat();
       }
       init();
@@ -356,7 +361,7 @@ function renderBubbleContent(item, isMine, fontScale = 1) {
   if (isLoading) {
     return (
       <ScreenBackground style={styles.centered}>
-        <ActivityIndicator size="large" color="#38BDF8" />
+        <ActivityIndicator size="large" color={COLORS.headerBackground}  />
         <Text style={styles.loadingText}>Loading messages...</Text>
       </ScreenBackground>
     );

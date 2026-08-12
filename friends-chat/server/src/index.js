@@ -294,11 +294,12 @@ app.delete('/messages/:id', requireAuth, (req, res) => {
 //------------------------------------------------------------------
 
 const getMembersForRoom = db.prepare(`
-  SELECT u.id, u.username, r.encrypted_room_key
+  SELECT u.id, u.username, r.encrypted_room_key, r.encrypted_by
   FROM users u
   JOIN room_members r ON r.user_id = u.id
   WHERE r.room_id = ?
 `);
+
 app.get('/rooms/:id/members', requireAuth, (req, res) => {
   const roomId = req.params.id;
 
@@ -314,6 +315,7 @@ app.get('/rooms/:id/members', requireAuth, (req, res) => {
     username: m.username,
     isPending: m.encrypted_room_key === null,
     myEncryptedRoomKey: m.id === req.userId ? m.encrypted_room_key : undefined,
+    myEncryptedBy: m.id === req.userId ? m.encrypted_by : undefined,
   }));
 
   res.json(formatted);
@@ -349,7 +351,7 @@ app.patch('/users/me/public-key', requireAuth, (req, res) => {
 
 const setEncryptedRoomKey = db.prepare(`
   UPDATE room_members
-  SET encrypted_room_key = ?
+  SET encrypted_room_key = ?, encrypted_by = ?
   WHERE room_id = ? AND user_id = ?
 `);
 
@@ -361,14 +363,15 @@ app.patch('/rooms/:roomId/members/:memberId/key', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Encrypted room key is required' });
   }
 
-  // The caller must already be a member of this room — only someone who
-  // already holds the room key is able to encrypt a copy for someone else.
   const callerMembership = checkMembership.get(roomId, req.userId);
   if (!callerMembership) {
     return res.status(403).json({ error: 'Not a member of this room' });
   }
 
-  const result = setEncryptedRoomKey.run(encryptedRoomKey, roomId, memberId);
+  // req.userId is ALWAYS the encryptor — they're the one who just
+  // performed the encryption, verified via their own auth token, never
+  // trusted from anything the client claims in the body.
+  const result = setEncryptedRoomKey.run(encryptedRoomKey, req.userId, roomId, memberId);
 
   if (result.changes === 0) {
     return res.status(404).json({ error: 'Target member not found in this room' });
